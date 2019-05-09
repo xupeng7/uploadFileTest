@@ -2,6 +2,7 @@ package hello.model;
 
 
 import javax.persistence.*;
+import java.sql.Timestamp;
 
 @Entity
 @Table(name ="akafutest" )
@@ -17,7 +18,9 @@ public class Akafu {
 
 
     @Column(name = "create_time")
-    protected String createTime;
+    protected Timestamp createTime;
+
+
 
 
     public String getOriginame() {
@@ -60,11 +63,11 @@ public class Akafu {
         this.type = type;
     }
 
-    public String getCreateTime() {
+    public Timestamp getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(String createTime) {
+    public void setCreateTime(Timestamp createTime) {
         this.createTime = createTime;
     }
 }

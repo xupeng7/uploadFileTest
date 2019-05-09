@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -37,14 +38,24 @@ public class FileSystemStorageService implements StorageService {
 
     private final Path rootLocation;
 
+    final StorageProperties storageProperties;
+
+  /*  private final Path serverUrl;*/
+
     @Autowired
     public FileSystemStorageService(
             StorageProperties properties,
-            AkafuDao akafuDao
+            AkafuDao akafuDao,
+            StorageProperties storageProperties
     ) {
         this.rootLocation = Paths.get(properties.getLocation());
         this.akafuDao = akafuDao;
+        this.storageProperties=storageProperties;
     }
+
+  /*  @Autowired
+    private StorageProperties storageProperties;*/
+
 
 
     @Override
@@ -72,14 +83,13 @@ public class FileSystemStorageService implements StorageService {
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, this.rootLocation.resolve(filename),
                         StandardCopyOption.REPLACE_EXISTING);
-
-                akafu.setImageUrl("http://localhost:8090/image/" + filename);
+                String imageUrl=storageProperties.getServerUrl();
+                akafu.setImageUrl(imageUrl + filename);
                 akafu.setOriginame(file.getOriginalFilename());
                 akafu.setWorkerId(3);
                 akafu.setType(1);
                 Date date=new Date();
-                SimpleDateFormat simpleDateFormat=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-                akafu.setCreateTime(simpleDateFormat.format(date));
+                akafu.setCreateTime(new Timestamp(date.getTime()));
                 akafuDao.save(akafu);
             }
         } catch (IOException e) {
@@ -112,14 +122,15 @@ public class FileSystemStorageService implements StorageService {
                 Files.copy(inputStream, this.rootLocation.resolve(filename),
                         StandardCopyOption.REPLACE_EXISTING);
 
+                String imageUrl=storageProperties.getServerUrl();
+
                 /* Akafu akafuAvatar=new Akafu();*/
-                akafuAvatar.setImageUrl("http://localhost:8090/image/" + filename);
+                akafuAvatar.setImageUrl(imageUrl + filename);
                 akafuAvatar.setOriginame(file.getOriginalFilename());
                 akafuAvatar.setWorkerId(3);
                 akafuAvatar.setType(0);
                 Date date=new Date();
-                SimpleDateFormat simpleDateFormat=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-                /*akafuAvatar.setCreateTime(simpleDateFormat.);*/
+                akafuAvatar.setCreateTime(new Timestamp(date.getTime()));
                 akafuDao.save(akafuAvatar);
             }
         } catch (IOException e) {
@@ -130,7 +141,7 @@ public class FileSystemStorageService implements StorageService {
     @Override
     public Stream<Path> loadAll() {
         try {
-            System.out.println("loadAll()-service");
+
             return Files.walk(this.rootLocation, 1)
                     .filter(path -> !path.equals(this.rootLocation))
                     .map(this.rootLocation::relativize);

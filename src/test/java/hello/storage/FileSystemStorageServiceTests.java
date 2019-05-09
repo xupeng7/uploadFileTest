@@ -35,11 +35,12 @@ public class FileSystemStorageServiceTests {
     private StorageProperties properties = new StorageProperties();
     private FileSystemStorageService service;
     private AkafuDao akafuDao;
+    private StorageProperties  storageProperties;
 
     @Before
     public void init() {
         properties.setLocation("target/files/" + Math.abs(new Random().nextLong()));
-        service = new FileSystemStorageService(properties,akafuDao);
+        service = new FileSystemStorageService(properties,akafuDao,storageProperties);
         service.init();
     }
 
