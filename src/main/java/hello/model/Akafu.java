@@ -1,24 +1,23 @@
 package hello.model;
 
 
-import org.springframework.stereotype.Component;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Table(name ="akafutest" )
 public class Akafu {
     @Id
     @GeneratedValue
-    private int  id;
-    private String originame;
-    private String imageUrl;
-    private int workerId;
-    private int type;//type 0是头像 type1是店铺资料
+    protected int  id;
+    protected String originame;
+    protected String imageUrl;
+    protected int workerId;
+    protected int type;//type 0是头像 type1是店铺资料
 
+
+
+    @Column(name = "create_time")
+    protected String createTime;
 
 
     public String getOriginame() {
@@ -59,5 +58,13 @@ public class Akafu {
 
     public void setType(int type) {
         this.type = type;
+    }
+
+    public String getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(String createTime) {
+        this.createTime = createTime;
     }
 }

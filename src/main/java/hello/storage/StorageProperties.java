@@ -8,7 +8,7 @@ public class StorageProperties {
     /**
      * Folder location for storing files
      */
-    private String location = "E:/pic";
+    protected String location = "E:/pic";
 
     public String getLocation() {
         return location;

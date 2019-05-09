@@ -17,6 +17,7 @@ package hello.storage;
 
 import java.util.Random;
 
+import hello.repository.AkafuDao;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,11 +34,12 @@ public class FileSystemStorageServiceTests {
 
     private StorageProperties properties = new StorageProperties();
     private FileSystemStorageService service;
+    private AkafuDao akafuDao;
 
     @Before
     public void init() {
         properties.setLocation("target/files/" + Math.abs(new Random().nextLong()));
-        service = new FileSystemStorageService(properties);
+        service = new FileSystemStorageService(properties,akafuDao);
         service.init();
     }
 

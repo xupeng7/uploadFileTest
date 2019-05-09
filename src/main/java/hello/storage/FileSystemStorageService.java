@@ -22,37 +22,43 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.stream.Stream;
 
 @Service
 public class FileSystemStorageService implements StorageService {
 
-    @Autowired
-    private AkafuDao akafuDao;
+    private final AkafuDao akafuDao;
 
-    Akafu akafuAvatar=new Akafu();//更新头像用的实例对象
+    Akafu akafuAvatar = new Akafu();//更新头像用的实例对象
 
     private final Path rootLocation;
 
     @Autowired
-    public FileSystemStorageService(StorageProperties properties) {
+    public FileSystemStorageService(
+            StorageProperties properties,
+            AkafuDao akafuDao
+    ) {
         this.rootLocation = Paths.get(properties.getLocation());
+        this.akafuDao = akafuDao;
     }
 
 
     @Override
     @Transactional
     public void store(MultipartFile file) {
-        Akafu akafu=new Akafu();
-       /* String filename = StringUtils.cleanPath(file.getOriginalFilename());*/
-       //拿到时间戳
-       String oldName=StringUtils.cleanPath(file.getOriginalFilename());
-        System.out.println(oldName);
+        Akafu akafu = new Akafu();
+        /* String filename = StringUtils.cleanPath(file.getOriginalFilename());*/
+        //拿到时间戳
+        String oldName = StringUtils.cleanPath(file.getOriginalFilename());
+
         //拿到后缀名
         String suffix = oldName.substring(oldName.lastIndexOf(".") + 1);
-        System.out.println(suffix);
-       String filename= Long.toString(Calendar.getInstance().getTimeInMillis())+"."+suffix;
+
+        String filename = Long.toString(Calendar.getInstance().getTimeInMillis()) + "." + suffix;
         try {
             if (file.isEmpty()) {
                 throw new StorageException("Failed to store empty file " + filename);
@@ -64,18 +70,19 @@ public class FileSystemStorageService implements StorageService {
                                 + filename);
             }
             try (InputStream inputStream = file.getInputStream()) {
-                Files.copy(inputStream, this.rootLocation.resolve  (filename),
-                    StandardCopyOption.REPLACE_EXISTING);
-                System.out.println("http://localhost:8082/image/"+filename);
-                System.out.println("存认证信息");
-                akafu.setImageUrl("http://localhost:8082/image/"+filename);
+                Files.copy(inputStream, this.rootLocation.resolve(filename),
+                        StandardCopyOption.REPLACE_EXISTING);
+
+                akafu.setImageUrl("http://localhost:8090/image/" + filename);
                 akafu.setOriginame(file.getOriginalFilename());
                 akafu.setWorkerId(3);
                 akafu.setType(1);
+                Date date=new Date();
+                SimpleDateFormat simpleDateFormat=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                akafu.setCreateTime(simpleDateFormat.format(date));
                 akafuDao.save(akafu);
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new StorageException("Failed to store file " + filename, e);
         }
     }
@@ -84,7 +91,13 @@ public class FileSystemStorageService implements StorageService {
     @Transactional
     public void storeAvatar(MultipartFile file) {
 
-        String filename = StringUtils.cleanPath(file.getOriginalFilename());
+        //拿到时间戳
+        String oldName = StringUtils.cleanPath(file.getOriginalFilename());
+
+        //拿到后缀名
+        String suffix = oldName.substring(oldName.lastIndexOf(".") + 1);
+
+        String filename = Long.toString(Calendar.getInstance().getTimeInMillis()) + "." + suffix;
         try {
             if (file.isEmpty()) {
                 throw new StorageException("Failed to store empty file " + filename);
@@ -96,18 +109,20 @@ public class FileSystemStorageService implements StorageService {
                                 + filename);
             }
             try (InputStream inputStream = file.getInputStream()) {
-                Files.copy(inputStream, this.rootLocation.resolve  (filename),
+                Files.copy(inputStream, this.rootLocation.resolve(filename),
                         StandardCopyOption.REPLACE_EXISTING);
-                System.out.println("http://localhost:8082/image/"+filename);
 
-                akafuAvatar.setImageUrl("http://localhost:8082/image/"+filename);
+                /* Akafu akafuAvatar=new Akafu();*/
+                akafuAvatar.setImageUrl("http://localhost:8090/image/" + filename);
                 akafuAvatar.setOriginame(file.getOriginalFilename());
                 akafuAvatar.setWorkerId(3);
                 akafuAvatar.setType(0);
-                akafuDao.save( akafuAvatar);
+                Date date=new Date();
+                SimpleDateFormat simpleDateFormat=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                /*akafuAvatar.setCreateTime(simpleDateFormat.);*/
+                akafuDao.save(akafuAvatar);
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new StorageException("Failed to store file " + filename, e);
         }
     }
@@ -117,10 +132,9 @@ public class FileSystemStorageService implements StorageService {
         try {
             System.out.println("loadAll()-service");
             return Files.walk(this.rootLocation, 1)
-                .filter(path -> !path.equals(this.rootLocation))
-                .map(this.rootLocation::relativize);
-        }
-        catch (IOException e) {
+                    .filter(path -> !path.equals(this.rootLocation))
+                    .map(this.rootLocation::relativize);
+        } catch (IOException e) {
             throw new StorageException("Failed to read stored files", e);
         }
 
@@ -138,14 +152,12 @@ public class FileSystemStorageService implements StorageService {
             Resource resource = new UrlResource(file.toUri());
             if (resource.exists() || resource.isReadable()) {
                 return resource;
-            }
-            else {
+            } else {
                 throw new StorageFileNotFoundException(
                         "Could not read file: " + filename);
 
             }
-        }
-        catch (MalformedURLException e) {
+        } catch (MalformedURLException e) {
             throw new StorageFileNotFoundException("Could not read file: " + filename, e);
         }
     }
@@ -159,9 +171,26 @@ public class FileSystemStorageService implements StorageService {
     public void init() {
         try {
             Files.createDirectories(rootLocation);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new StorageException("Could not initialize storage", e);
         }
+    }
+
+
+    //查询用户的认证照片
+    @Override
+    public List<Akafu> findAuthenticationPicsByWorkerIdAndType(int workerId, int type) {
+        return akafuDao.findAkafusByWorkerIdAndType(workerId, type);
+    }
+
+    @Override
+    public void deleteById(int id) {
+        akafuDao.deleteById(id);
+    }
+
+    //查询用户头像
+    @Override
+    public Akafu findAvatarByWorkerIdAndType(int workerId, int type) {
+        return akafuDao.findAkafuByWorkerIdAndType(workerId, type);
     }
 }
