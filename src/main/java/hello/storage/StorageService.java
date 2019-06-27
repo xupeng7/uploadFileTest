@@ -10,6 +10,7 @@ public interface StorageService {
 
     void init();
 
+    String storeImage(MultipartFile file);
     void store(MultipartFile file);
 
     void storeAvatar(MultipartFile file);

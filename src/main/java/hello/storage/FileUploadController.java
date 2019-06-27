@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 
 import hello.model.ResultVo;
+import hello.service.ImageServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +26,8 @@ public class FileUploadController {
     public FileUploadController(StorageService storageService) {
         this.storageService = storageService;
     }
+    @Autowired
+    private ImageServiceImpl imageService;
 
     @GetMapping("/")
     public String listUploadedFiles(Model model) throws IOException {
@@ -53,17 +56,21 @@ public class FileUploadController {
     public ResultVo handleFileUpload(@RequestParam("file") MultipartFile file,
                                      RedirectAttributes redirectAttributes) {
        try {
-           storageService.store(file);
+           //storageService.store(file);
+
+           String fileName=storageService.storeImage(file);
+           Long preTime=System.currentTimeMillis();
+           imageService.imageHandler(fileName);
+           Long didTime =System.currentTimeMillis();
+           System.out.println("总耗时"+(didTime-preTime)+"ms");
            return new ResultVo(200,"上传成功");
        }catch (StorageException e){
            e.getMessage();
            return new ResultVo(500,"上传失败");
+       } catch (Exception e) {
+           e.printStackTrace();
+           return new ResultVo(500,"上传失败");
        }
-
-       /*redirectAttributes.addFlashAttribute("message",
-                "You successfully uploaded " + file.getOriginalFilename() + "!");
-*/
-
 
     }
      /*

@@ -43,16 +43,16 @@ public class FileSystemStorageService implements StorageService {
 
     @Override
     @Transactional
-    public void store(MultipartFile file) {
+    public String  storeImage(MultipartFile file) {
         Akafu akafu=new Akafu();
-       /* String filename = StringUtils.cleanPath(file.getOriginalFilename());*/
-       //拿到时间戳
-       String oldName=StringUtils.cleanPath(file.getOriginalFilename());
+        /* String filename = StringUtils.cleanPath(file.getOriginalFilename());*/
+        //拿到时间戳
+        String oldName=StringUtils.cleanPath(file.getOriginalFilename());
         System.out.println(oldName);
         //拿到后缀名
         String suffix = oldName.substring(oldName.lastIndexOf(".") + 1);
         System.out.println(suffix);
-       String filename= Long.toString(Calendar.getInstance().getTimeInMillis())+"."+suffix;
+        String filename= Long.toString(Calendar.getInstance().getTimeInMillis())+"."+suffix;
         try {
             if (file.isEmpty()) {
                 throw new StorageException("Failed to store empty file " + filename);
@@ -65,7 +65,7 @@ public class FileSystemStorageService implements StorageService {
             }
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, this.rootLocation.resolve  (filename),
-                    StandardCopyOption.REPLACE_EXISTING);
+                        StandardCopyOption.REPLACE_EXISTING);
                 System.out.println("http://localhost:8082/image/"+filename);
                 System.out.println("存认证信息");
                 akafu.setImageUrl("http://localhost:8082/image/"+filename);
@@ -78,6 +78,12 @@ public class FileSystemStorageService implements StorageService {
         catch (IOException e) {
             throw new StorageException("Failed to store file " + filename, e);
         }
+        return filename;
+    }
+
+    @Override
+    public void store(MultipartFile file) {
+
     }
 
 
